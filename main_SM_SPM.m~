@@ -1,0 +1,68 @@
+clc;clear;close all;
+tStart=tic;
+
+load('optLibs.mat');
+%Open start file, where the scheme will be drawn
+directory = fullfile(pwd,'SM_SPM.osd');
+optsys = OpenOptisystem(directory);
+
+%Get main system variables
+Document = optsys.GetActiveDocument;
+LayoutMgr = Document.GetLayoutMgr;
+Layout = LayoutMgr.GetCurrentLayout;
+Canvas = Layout.GetCurrentCanvas;
+PmMgr = Layout.GetParameterMgr;
+
+centFreq = 193.1;% central frequency in THz
+modFreq = 12.5;% modulation frequency in GHz
+BandwidthForInv = 20; %GHz
+BandwidthForRect = 30; %GHz
+
+
+Las = Canvas.GetComponentByName('CW Laser');
+Gen = Canvas.GetComponentByName('Sine Generator');
+InvRect = Canvas.GetComponentByName('Inverted Rectangle Optical Filter');
+RectFilt = Canvas.GetComponent('Rectangle Optical Filter_2');
+Ampl = Canvas.GetComponentByName('Optical Amplifier');
+Fiber = Canvas.GetComponentByName('Optical Fiber');
+OPM = Canvas.GetComponentByName('Optical Power Meter');
+OPM1 = Canvas.GetComponentByName('Optical Power Meter_1');
+OPM2 = Canvas.GetComponentByName('Optical Power Meter_2');
+
+Las.SetParameterValue('Frequency',centFreq);
+Gen.SetParameterValue('Frequency',modFreq);
+InvRect.SetParameterValue('Frequency',centFreq);
+InvRect.SetParameterValue('Bandwidth',BandwidthForInv);
+RectFilt.SetParameterValue('Frequency',centFreq);
+RectFilt.SetParameterValue('Bandwidth',BandwidthForRect);
+
+
+
+
+d2 = 17;
+% Aeff = 80*1.3145/7.6;
+Aeff = 80;
+L = 2;
+Att = 0.2;
+Fiber.SetParameterValue('Attenuation',Att);
+Fiber.SetParameterValue('Length',L);
+Fiber.SetParameterValue('Dispersion',d2);
+Fiber.SetParameterValue('Dispersion slope',0);
+Fiber.SetParameterValue('Effective area',Aeff);
+
+timeForFile=datestr(now,'mm-dd-yyyy_HH_MM_SS');
+Powers = 10:20;
+P1 = zeros(length(Powers),1);
+P2 = zeros(length(Powers),1);
+for q=1:length(Powers)
+    disp(Powers(q));
+    Ampl.SetParameterValue('Power',Powers(q));
+    Document.CalculateProject(true,true);
+    P1(q) = OPM1.GetResultValue('Total Power (dBm)');
+    P2(q) = OPM2.GetResultValue('Total Power (dBm)');
+end
+
+fileName = [timeForFile,sprintf('Powers = %d - %d dBm_dispersion = %d',Powers(1),Powers(end),d2)];
+save(fileName);
+
+timeOfCals = toc(tStart);
