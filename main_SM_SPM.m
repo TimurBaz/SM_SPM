@@ -20,7 +20,7 @@ BandwidthForRect = 30; %GHz
 d2 = 17;% dispersion in ps/nm/km
 % Aeff = 80*1.3145/7.6;
 Aeff = 80;% effective mode area in mkm^2
-L = 0.5;% length of fiber in km
+L = 2;% length of fiber in km
 Att = 0.2;% attenuation in dB/km
 
 Powers = 10:20;% power of beat signal at the beginning of the fiber
@@ -52,12 +52,15 @@ Fiber.SetParameterValue('Dispersion slope',0);
 Fiber.SetParameterValue('Effective area',Aeff);
 
 FiltBranch1.SetParameterValue('Frequency',centFreq+modFreq/1000);
-FiltBranch2.SetParameterValue('Frequency',centFreq+2*modFreq/1000);
+FiltBranch2.SetParameterValue('Frequency',centFreq+3*modFreq/1000);
 
 timeForFile=datestr(now,'mm-dd-yyyy_HH_MM_SS');
 
 P1 = zeros(length(Powers),1);
 P2 = zeros(length(Powers),1);
+
+Canvas.UpdateAll;%draw all created components and connections
+Document.Save(strcat(pwd,'\SM_SPM.osd'));
 
 for q=1:length(Powers)
     disp(Powers(q));
